@@ -4,53 +4,147 @@
   <meta charset="UTF-8">
   <title>Consulta de Notas por DNI</title>
   <style>
-    body { font-family: Arial, sans-serif; padding: 20px; }
-    input, button { padding: 8px; margin: 5px; }
-    table { border-collapse: collapse; margin-top: 20px; width: 100%; }
-    th, td { border: 1px solid #ccc; padding: 6px; text-align: center; }
-    th { background-color: #f0f0f0; }
-    h2 { margin-bottom: 10px; }
+    body { 
+      font-family: Arial, sans-serif; 
+      padding: 20px; 
+      background: #f9f9f9; 
+      display: flex; 
+      justify-content: space-between;
+    }
+    .contenido {
+      flex: 3;
+    }
+    .sidebar {
+      flex: 1;
+      margin-left: 20px;
+      background: #fff;
+      padding: 15px;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      text-align: center;
+    }
+    input, button { padding: 10px; margin: 5px; }
+    table { border-collapse: collapse; width: 100%; margin-top: 20px; background: white; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+    th { background: #4CAF50; color: white; }
+    tr:nth-child(even) { background: #f2f2f2; }
+    .totales { background:#e0e0e0; font-weight:bold; }
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .logo img {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+    }
   </style>
 </head>
 <body>
-  <h2>Consulta de Notas por DNI</h2>
-  <input type="text" id="dni" placeholder="Ingrese DNI">
-  <button onclick="buscar()">Buscar</button>
-  <div id="resultado"></div>
+  <div class="contenido">
+    <div class="logo">
+      <img src="insignia.png" alt="Insignia Colegio">
+      <h2>Consulta de Notas por DNI</h2>
+    </div>
+
+    <input type="text" id="dni" placeholder="Ingrese DNI">
+    <button onclick="buscar()">Buscar</button>
+    <div id="resultado"></div>
+  </div>
+
+  <!-- Encuesta Like -->
+  <div class="sidebar">
+    <h3>¿Te gusta este sistema?</h3>
+    <button onclick="darLike()">👍 Me gusta</button>
+    <p>Likes: <span id="contador">0</span></p>
+  </div>
 
   <script>
-    let encabezados = [];
     let datos = [];
+    let likes = 0;
 
-    // Cargar archivo CSV
+    // Leer el CSV
     fetch("notas.csv")
-      .then(res => res.text())
-      .then(texto => {
-        let lineas = texto.trim().split("\n");
-        encabezados = lineas[0].split(";");
-        datos = lineas.slice(1).map(l => l.split(";"));
+      .then(r => r.text())
+      .then(t => {
+        let lineas = t.trim().split("\n");
+        let headers = lineas[0].split(";");
+        lineas.slice(1).forEach(l => {
+          let valores = l.split(";");
+          let obj = {};
+          headers.forEach((h,i) => obj[h.trim()] = valores[i] ? valores[i].trim() : "");
+          datos.push(obj);
+        });
       });
 
-    function buscar() {
+    function buscar(){
       let dni = document.getElementById("dni").value.trim();
+      let alumno = datos.find(d => d["DNI"] === dni);
       let r = document.getElementById("resultado");
-      let alumno = datos.find(fila => fila[0] === dni);
 
-      if (alumno) {
-        let html = `<h3>${alumno[4]} (Grado: ${alumno[2]} - Sección: ${alumno[3]})</h3>`;
-        html += `<table><tr><th>Curso</th><th>Competencias</th></tr>`;
-
-        // Recorremos todas las columnas desde la 5 en adelante (cursos y totales)
-        for (let i = 5; i < encabezados.length; i++) {
-          html += `<tr><td>${encabezados[i]}</td><td>${alumno[i]}</td></tr>`;
-        }
-
-        html += `</table>`;
-        r.innerHTML = html;
-      } else {
+      if(!alumno){
         r.innerHTML = "❌ DNI no encontrado";
+        return;
       }
+
+      let html = `<h3>${alumno["ESTUDIANTE"]}</h3>`;
+      html += `<table>
+        <tr>
+          <th>Área Curricular</th>
+          <th>C1</th>
+          <th>C2</th>
+          <th>C3</th>
+          <th>C4</th>
+          <th>Promedio</th>
+        </tr>`;
+
+      // Agrupar competencias por área curricular
+      let areas = {};
+      Object.keys(alumno).forEach(col => {
+        if(col.includes("C1") || col.includes("C2") || col.includes("C3") || col.includes("C4")){
+          let partes = col.split(" ");
+          let area = partes.slice(0, -1).join(" "); 
+          let comp = partes[partes.length - 1]; 
+          if(!areas[area]) areas[area] = {};
+          areas[area][comp] = alumno[col];
+        }
+      });
+
+      // Pintar filas de áreas
+      for(let area in areas){
+        let notas = ["C1","C2","C3","C4"].map(c => parseFloat(areas[area][c]) || 0);
+        let validas = notas.filter(n => n > 0);
+        let promedio = validas.length ? (validas.reduce((a,b) => a+b,0) / validas.length).toFixed(2) : "";
+        
+        html += `<tr>
+          <td>${area}</td>
+          <td>${areas[area]["C1"] || ""}</td>
+          <td>${areas[area]["C2"] || ""}</td>
+          <td>${areas[area]["C3"] || ""}</td>
+          <td>${areas[area]["C4"] || ""}</td>
+          <td>${promedio}</td>
+        </tr>`;
+      }
+
+      // Totales
+      ["Total de Calificaciones","Total AD","Total A","Total B","Total C"].forEach(col => {
+        if (alumno[col] !== undefined && alumno[col] !== "") {
+          html += `<tr class="totales"><td colspan="5">${col}</td><td>${alumno[col]}</td></tr>`;
+        }
+      });
+
+      html += "</table>";
+      r.innerHTML = html;
+    }
+
+    // Función de Like
+    function darLike(){
+      likes++;
+      document.getElementById("contador").textContent = likes;
     }
   </script>
 </body>
 </html>
+
+
