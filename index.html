@@ -11,7 +11,12 @@
       display: flex; 
       justify-content: space-between;
     }
-    .contenido { flex: 3; }
+    .contenido { 
+      flex: 3; 
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
     .sidebar {
       flex: 1;
       margin-left: 20px;
@@ -20,24 +25,59 @@
       border: 1px solid #ccc;
       border-radius: 10px;
       text-align: center;
+      height: fit-content;
     }
-    input, button { padding: 10px; margin: 5px; }
-    table { border-collapse: collapse; width: 100%; margin-top: 20px; background: white; }
-    th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
-    th { background: #4CAF50; color: white; }
-    tr:nth-child(even) { background: #f2f2f2; }
-    .totales { background:#e0e0e0; font-weight:bold; }
+    .encabezado {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+    }
     .logo {
-      text-align: center;
-      margin-bottom: 15px;
+      flex: 0 0 auto;
     }
     .logo img {
-      width: 100px;   /* más grande y centrada */
+      width: 80px;
       height: auto;
-      border-radius: 0; 
+      border-radius: 0;
       object-fit: contain;
       display: block;
-      margin: 0 auto;
+    }
+    .titulo {
+      flex: 1;
+      text-align: center;
+    }
+    .titulo h2 {
+      margin: 0;
+    }
+    .buscador {
+      margin-top: 10px;
+    }
+    input, button { 
+      padding: 10px; 
+      margin: 5px; 
+    }
+    table { 
+      border-collapse: collapse; 
+      width: 100%; 
+      margin-top: 20px; 
+      background: white; 
+    }
+    th, td { 
+      border: 1px solid #ccc; 
+      padding: 8px; 
+      text-align: center; 
+    }
+    th { 
+      background: #4CAF50; 
+      color: white; 
+    }
+    tr:nth-child(even) { 
+      background: #f2f2f2; 
+    }
+    .totales { 
+      background:#e0e0e0; 
+      font-weight:bold; 
     }
     .estado {
       font-size: 0.9rem;
@@ -51,15 +91,21 @@
 </head>
 <body>
   <div class="contenido">
-    <!-- Insignia arriba centrada -->
-    <div class="logo">
-      <img src="insignia.png" alt="Insignia Colegio">
-      <h2>Consulta de Notas por DNI</h2>
-      <span id="estado" class="estado">Cargando datos…</span>
+    <!-- Encabezado con insignia a la izquierda y título centrado -->
+    <div class="encabezado">
+      <div class="logo">
+        <img src="insignia.png" alt="Insignia Colegio">
+      </div>
+      <div class="titulo">
+        <h2>Consulta de Notas por DNI</h2>
+        <div class="buscador">
+          <input type="text" id="dni" placeholder="Ingrese DNI" autocomplete="off">
+          <button id="btnBuscar" class="btn" onclick="buscar()" disabled>Buscar</button>
+        </div>
+        <span id="estado" class="estado">Cargando datos…</span>
+      </div>
     </div>
 
-    <input type="text" id="dni" placeholder="Ingrese DNI" autocomplete="off">
-    <button id="btnBuscar" class="btn" onclick="buscar()" disabled>Buscar</button>
     <div id="resultado"></div>
   </div>
 
@@ -74,7 +120,6 @@
     let datos = [];
     let csvCargado = false;
 
-    // Likes
     let likes = 0;
     let likeDado = false;
     let consultaActiva = false;
@@ -84,7 +129,6 @@
     const btnLike = document.getElementById('btnLike');
     const inputDni = document.getElementById('dni');
 
-    // Enter para buscar
     inputDni.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') buscar();
     });
