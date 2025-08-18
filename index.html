@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Consulta de Notas por DNI</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    input, button { padding: 8px; margin: 5px; }
+    table { border-collapse: collapse; margin-top: 20px; width: 100%; }
+    th, td { border: 1px solid #ccc; padding: 6px; text-align: center; }
+    th { background-color: #f0f0f0; }
+    h2 { margin-bottom: 10px; }
+  </style>
+</head>
+<body>
+  <h2>Consulta de Notas por DNI</h2>
+  <input type="text" id="dni" placeholder="Ingrese DNI">
+  <button onclick="buscar()">Buscar</button>
+  <div id="resultado"></div>
+
+  <script>
+    let encabezados = [];
+    let datos = [];
+
+    // Cargar archivo CSV
+    fetch("notas.csv")
+      .then(res => res.text())
+      .then(texto => {
+        let lineas = texto.trim().split("\n");
+        encabezados = lineas[0].split(";");
+        datos = lineas.slice(1).map(l => l.split(";"));
+      });
+
+    function buscar() {
+      let dni = document.getElementById("dni").value.trim();
+      let r = document.getElementById("resultado");
+      let alumno = datos.find(fila => fila[0] === dni);
+
+      if (alumno) {
+        let html = `<h3>${alumno[4]} (Grado: ${alumno[2]} - Sección: ${alumno[3]})</h3>`;
+        html += `<table><tr><th>Curso</th><th>Competencias</th></tr>`;
+
+        // Recorremos todas las columnas desde la 5 en adelante (cursos y totales)
+        for (let i = 5; i < encabezados.length; i++) {
+          html += `<tr><td>${encabezados[i]}</td><td>${alumno[i]}</td></tr>`;
+        }
+
+        html += `</table>`;
+        r.innerHTML = html;
+      } else {
+        r.innerHTML = "❌ DNI no encontrado";
+      }
+    }
+  </script>
+</body>
+</html>
