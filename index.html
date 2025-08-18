@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+       <!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8">
@@ -23,12 +23,32 @@
       border-radius: 10px;
       text-align: center;
     }
-    input, button { padding: 10px; margin: 5px; }
-    table { border-collapse: collapse; width: 100%; margin-top: 20px; background: white; }
-    th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
-    th { background: #4CAF50; color: white; }
-    tr:nth-child(even) { background: #f2f2f2; }
-    .totales { background:#e0e0e0; font-weight:bold; }
+    input, button { 
+      padding: 10px; 
+      margin: 5px; 
+    }
+    table { 
+      border-collapse: collapse; 
+      width: 100%; 
+      margin-top: 20px; 
+      background: white; 
+    }
+    th, td { 
+      border: 1px solid #ccc; 
+      padding: 8px; 
+      text-align: center; 
+    }
+    th { 
+      background: #4CAF50; 
+      color: white; 
+    }
+    tr:nth-child(even) { 
+      background: #f2f2f2; 
+    }
+    .totales { 
+      background:#e0e0e0; 
+      font-weight:bold; 
+    }
     .logo {
       display: flex;
       align-items: center;
@@ -36,8 +56,8 @@
     }
     .logo img {
       width: 60px;
-      height: 60px;
-      border-radius: 50%;
+      height: auto;   /* mantiene proporción */
+      border-radius: 0; /* la imagen ya no se recorta en círculo */
     }
   </style>
 </head>
@@ -63,6 +83,7 @@
   <script>
     let datos = [];
     let likes = 0;
+    let likeDado = false; // bandera para controlar un like por consulta
 
     // Leer el CSV
     fetch("notas.csv")
@@ -130,21 +151,4 @@
       // Totales
       ["Total de Calificaciones","Total AD","Total A","Total B","Total C"].forEach(col => {
         if (alumno[col] !== undefined && alumno[col] !== "") {
-          html += `<tr class="totales"><td colspan="5">${col}</td><td>${alumno[col]}</td></tr>`;
-        }
-      });
-
-      html += "</table>";
-      r.innerHTML = html;
-    }
-
-    // Función de Like
-    function darLike(){
-      likes++;
-      document.getElementById("contador").textContent = likes;
-    }
-  </script>
-</body>
-</html>
-
-
+          html += `<tr class="totales"><td colspan="5">${col}</td><td>${alumno[col]}</td></tr>
