@@ -214,7 +214,19 @@
         </tr>`;
       });
 
-      ["Total de Calificaciones","Total AD","Total A","Total B","Total C"].forEach(col => {
+      // Calcular Total de Calificaciones siempre
+      let totalNotas = 0;
+      Object.values(areas).forEach(area => {
+        ["C1","C2","C3","C4"].forEach(c => {
+          if (area[c] && !isNaN(parseFloat(area[c]))) {
+            totalNotas++;
+          }
+        });
+      });
+      html += `<tr class="totales"><td colspan="5">Total de Calificaciones</td><td>${totalNotas}</td></tr>`;
+
+      // Mostrar otros totales si existen en CSV
+      ["Total AD","Total A","Total B","Total C"].forEach(col => {
         if (alumno[col]) {
           html += `<tr class="totales"><td colspan="5">${col}</td><td>${alumno[col]}</td></tr>`;
         }
@@ -223,24 +235,5 @@
       html += "</table>";
       r.innerHTML = html;
 
-      likeDado = false;
-      consultaActiva = true;
-      btnLike.disabled = false;
-    }
+      li
 
-    function darLike(){
-      if (!consultaActiva) {
-        alert("Primero realiza una consulta válida.");
-        return;
-      }
-      if (!likeDado) {
-        likes++;
-        likeDado = true;
-        document.getElementById("contador").textContent = likes;
-      } else {
-        alert("Ya diste tu like en esta consulta 🙂");
-      }
-    }
-  </script>
-</body>
-</html>
