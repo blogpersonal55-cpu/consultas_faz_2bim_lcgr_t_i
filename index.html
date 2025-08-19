@@ -22,65 +22,78 @@
       text-align: center;
     }
     input, button { padding: 10px; margin: 5px; }
-    table { border-collapse: collapse; width: 100%; margin-top: 20px; background: white; }
-    th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+    table { border-collapse: collapse; width: 100%; margin-top: 20px; background: white; table-layout: fixed; font-size: 0.9rem; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: center; word-wrap: break-word; }
     th { background: #4CAF50; color: white; }
     tr:nth-child(even) { background: #f2f2f2; }
     .totales { background:#e0e0e0; font-weight:bold; }
+    .header-text {
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: #2c3e50;
+      margin-bottom: 10px;
+    }
     .logo {
       text-align: center;
       margin-bottom: 15px;
     }
     .logo img {
-      width: 100px;
+      width: 120px;
       height: auto;
+      border-radius: 0; 
       object-fit: contain;
       display: block;
       margin: 0 auto;
     }
-    .estado {
-      font-size: 0.9rem;
-      color: #555;
-      display: block;
-      margin-top: 5px;
-    }
-    .fila-busqueda {
+    .busqueda {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-top: 15px;
+      margin: 15px 0;
     }
-    .izquierda {
-      display: flex;
-      align-items: center;
-      gap: 10px;
+    .busqueda .izq {
+      flex: 1;
+      text-align: left;
     }
-    #infoAlumno {
+    .busqueda .der {
+      flex: 1;
+      text-align: right;
       font-weight: bold;
       color: #333;
     }
+    #resultado {
+      max-height: 70vh;
+      overflow-y: auto;
+      margin-top: 15px;
+    }
     .btn { cursor: pointer; }
     .btn[disabled] { opacity: 0.5; cursor: not-allowed; }
+    @media screen and (max-width: 1366px) {
+      body { font-size: 14px; }
+      table { font-size: 0.8rem; }
+    }
   </style>
 </head>
 <body>
   <div class="contenido">
-    <!-- Insignia y título centrados -->
+    <!-- Texto llamativo -->
+    <div class="header-text">
+      Buenas Prácticas de Gestión: <span style="color:#e74c3c;">"Con mi uso del DNI, activo mi rol de ciudadana"</span>
+    </div>
+
+    <!-- Insignia centrada -->
     <div class="logo">
       <img src="insignia.png" alt="Insignia Colegio">
       <h2>Consulta de Notas por DNI</h2>
-      <span id="estado" class="estado">Cargando datos…</span>
     </div>
 
-    <!-- Fila buscador + grado/sección -->
-    <div class="fila-busqueda">
-      <div class="izquierda">
+    <!-- Buscador y grado/sección en la misma fila -->
+    <div class="busqueda">
+      <div class="izq">
         <input type="text" id="dni" placeholder="Ingrese DNI" autocomplete="off">
         <button id="btnBuscar" class="btn" onclick="buscar()" disabled>Buscar</button>
       </div>
-      <div class="derecha">
-        <span id="infoAlumno"></span>
-      </div>
+      <div class="der" id="gradoSeccion">Grado: — | Sección: —</div>
     </div>
 
     <div id="resultado"></div>
@@ -97,16 +110,14 @@
     let datos = [];
     let csvCargado = false;
 
-    // Likes
     let likes = 0;
     let likeDado = false;
     let consultaActiva = false;
 
-    const estado = document.getElementById('estado');
     const btnBuscar = document.getElementById('btnBuscar');
     const btnLike = document.getElementById('btnLike');
     const inputDni = document.getElementById('dni');
-    const infoAlumno = document.getElementById('infoAlumno');
+    const gradoSeccion = document.getElementById('gradoSeccion');
 
     // Enter para buscar
     inputDni.addEventListener('keydown', (e) => {
@@ -128,12 +139,10 @@
           datos.push(obj);
         }
         csvCargado = true;
-        estado.textContent = "Datos cargados";
         btnBuscar.disabled = false;
       })
       .catch(err => {
         console.error(err);
-        estado.textContent = "⚠️ Error cargando datos";
       });
 
     function buscar(){
@@ -146,7 +155,6 @@
         r.innerHTML = "⚠️ Ingrese un DNI.";
         consultaActiva = false;
         btnLike.disabled = true;
-        infoAlumno.textContent = "";
         return;
       }
 
@@ -156,13 +164,12 @@
         r.innerHTML = "❌ DNI no encontrado";
         consultaActiva = false;
         btnLike.disabled = true;
-        infoAlumno.textContent = "";
+        gradoSeccion.textContent = "Grado: — | Sección: —";
         return;
       }
 
-      // Mostrar grado y sección a la derecha
-      infoAlumno.textContent =
-        `Grado: ${alumno["GRADO"] || ""}  |  Sección: ${alumno["SECCIÓN"] || alumno["SECCION"] || ""}`;
+      // Mostrar grado y sección
+      gradoSeccion.textContent = `Grado: ${alumno["GRADO"] ?? "—"} | Sección: ${alumno["SECCION"] ?? "—"}`;
 
       let html = `<h3>${alumno["ESTUDIANTE"] ?? ""}</h3>`;
       html += `<table>
@@ -224,11 +231,7 @@
         likeDado = true;
         document.getElementById("contador").textContent = likes;
       } else {
-        alert("Ya diste tu like en esta consulta 🙂");
-      }
-    }
-  </script>
-</body>
-</html>
+        alert("Ya diste tu like en est
+
 
 
