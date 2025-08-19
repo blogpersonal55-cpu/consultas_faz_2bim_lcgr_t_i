@@ -11,12 +11,7 @@
       display: flex; 
       justify-content: space-between;
     }
-    .contenido { 
-      flex: 3; 
-      display: flex;
-      flex-direction: column;
-      gap: 20px;
-    }
+    .contenido { flex: 3; }
     .sidebar {
       flex: 1;
       margin-left: 20px;
@@ -25,58 +20,23 @@
       border: 1px solid #ccc;
       border-radius: 10px;
       text-align: center;
-      height: fit-content;
     }
-    .encabezado {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 20px;
-    }
+    input, button { padding: 10px; margin: 5px; }
+    table { border-collapse: collapse; width: 100%; margin-top: 20px; background: white; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+    th { background: #4CAF50; color: white; }
+    tr:nth-child(even) { background: #f2f2f2; }
+    .totales { background:#e0e0e0; font-weight:bold; }
     .logo {
-      flex: 0 0 auto;
+      text-align: center;
+      margin-bottom: 15px;
     }
     .logo img {
-      width: 80px;
+      width: 100px;
       height: auto;
       object-fit: contain;
       display: block;
-    }
-    .titulo {
-      flex: 1;
-      text-align: center;
-    }
-    .titulo h2 {
-      margin: 0;
-    }
-    .buscador {
-      margin-top: 10px;
-    }
-    input, button { 
-      padding: 10px; 
-      margin: 5px; 
-    }
-    table { 
-      border-collapse: collapse; 
-      width: 100%; 
-      margin-top: 20px; 
-      background: white; 
-    }
-    th, td { 
-      border: 1px solid #ccc; 
-      padding: 8px; 
-      text-align: center; 
-    }
-    th { 
-      background: #4CAF50; 
-      color: white; 
-    }
-    tr:nth-child(even) { 
-      background: #f2f2f2; 
-    }
-    .totales { 
-      background:#e0e0e0; 
-      font-weight:bold; 
+      margin: 0 auto;
     }
     .estado {
       font-size: 0.9rem;
@@ -84,31 +44,49 @@
       display: block;
       margin-top: 5px;
     }
+    .fila-busqueda {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 15px;
+    }
+    .izquierda {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    #infoAlumno {
+      font-weight: bold;
+      color: #333;
+    }
     .btn { cursor: pointer; }
     .btn[disabled] { opacity: 0.5; cursor: not-allowed; }
   </style>
 </head>
 <body>
   <div class="contenido">
-    <!-- Encabezado -->
-    <div class="encabezado">
-      <div class="logo">
-        <img src="insignia.png" alt="Insignia Colegio">
+    <!-- Insignia y título centrados -->
+    <div class="logo">
+      <img src="insignia.png" alt="Insignia Colegio">
+      <h2>Consulta de Notas por DNI</h2>
+      <span id="estado" class="estado">Cargando datos…</span>
+    </div>
+
+    <!-- Fila buscador + grado/sección -->
+    <div class="fila-busqueda">
+      <div class="izquierda">
+        <input type="text" id="dni" placeholder="Ingrese DNI" autocomplete="off">
+        <button id="btnBuscar" class="btn" onclick="buscar()" disabled>Buscar</button>
       </div>
-      <div class="titulo">
-        <h2>Consulta de Notas por DNI</h2>
-        <div class="buscador">
-          <input type="text" id="dni" placeholder="Ingrese DNI" autocomplete="off">
-          <button id="btnBuscar" class="btn" onclick="buscar()" disabled>Buscar</button>
-        </div>
-        <span id="estado" class="estado">Cargando datos…</span>
+      <div class="derecha">
+        <span id="infoAlumno"></span>
       </div>
     </div>
 
     <div id="resultado"></div>
   </div>
 
-  <!-- Sidebar -->
+  <!-- Encuesta Like -->
   <div class="sidebar">
     <h3>¿Te gusta este sistema?</h3>
     <button id="btnLike" class="btn" onclick="darLike()" disabled>👍 Me gusta</button>
@@ -119,6 +97,7 @@
     let datos = [];
     let csvCargado = false;
 
+    // Likes
     let likes = 0;
     let likeDado = false;
     let consultaActiva = false;
@@ -127,16 +106,9 @@
     const btnBuscar = document.getElementById('btnBuscar');
     const btnLike = document.getElementById('btnLike');
     const inputDni = document.getElementById('dni');
+    const infoAlumno = document.getElementById('infoAlumno');
 
-    // Activar botón al tipear
-    inputDni.addEventListener("input", () => {
-      if (inputDni.value.trim() !== "") {
-        btnBuscar.disabled = false;
-      } else {
-        btnBuscar.disabled = true;
-      }
-    });
-
+    // Enter para buscar
     inputDni.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') buscar();
     });
@@ -156,7 +128,8 @@
           datos.push(obj);
         }
         csvCargado = true;
-        estado.textContent = "✅ Listo para consultas";
+        estado.textContent = "Datos cargados";
+        btnBuscar.disabled = false;
       })
       .catch(err => {
         console.error(err);
@@ -164,10 +137,7 @@
       });
 
     function buscar(){
-      if (!csvCargado) {
-        alert("⚠️ Los datos aún no están cargados, espera un momento.");
-        return;
-      }
+      if (!csvCargado) return;
 
       const dni = inputDni.value.trim();
       const r = document.getElementById("resultado");
@@ -176,6 +146,7 @@
         r.innerHTML = "⚠️ Ingrese un DNI.";
         consultaActiva = false;
         btnLike.disabled = true;
+        infoAlumno.textContent = "";
         return;
       }
 
@@ -185,10 +156,15 @@
         r.innerHTML = "❌ DNI no encontrado";
         consultaActiva = false;
         btnLike.disabled = true;
+        infoAlumno.textContent = "";
         return;
       }
 
-      let html = `<h3>${alumno["ESTUDIANTE"] ?? ""}</h3>`;
+      // Mostrar grado y sección a la derecha
+      infoAlumno.textContent =
+        Grado: ${alumno["GRADO"] || ""}  |  Sección: ${alumno["SECCIÓN"] || alumno["SECCION"] || ""};
+
+      let html = <h3>${alumno["ESTUDIANTE"] ?? ""}</h3>;
       html += `<table>
         <tr>
           <th>Área Curricular</th>
@@ -196,7 +172,7 @@
           <th>C2</th>
           <th>C3</th>
           <th>C4</th>
-          <th>Promedio</th>
+          <th>Nota Final</th>
         </tr>`;
 
       const areas = {};
@@ -224,9 +200,35 @@
         </tr>`;
       });
 
-      // Mostrar totales especiales si existen en CSV
-      ["Total AD","Total A","Total B","Total C"].forEach(col => {
+      ["Total de Calificaciones","Total AD","Total A","Total B","Total C"].forEach(col => {
         if (alumno[col]) {
-          html += `<tr class="totales"><td colspan="5">${col}</td><td>${
+          html += <tr class="totales"><td colspan="5">${col}</td><td>${alumno[col]}</td></tr>;
+        }
+      });
+
+      html += "</table>";
+      r.innerHTML = html;
+
+      likeDado = false;
+      consultaActiva = true;
+      btnLike.disabled = false;
+    }
+
+    function darLike(){
+      if (!consultaActiva) {
+        alert("Primero realiza una consulta válida.");
+        return;
+      }
+      if (!likeDado) {
+        likes++;
+        likeDado = true;
+        document.getElementById("contador").textContent = likes;
+      } else {
+        alert("Ya diste tu like en esta consulta 🙂");
+      }
+    }
+  </script>
+</body>
+</html>
 
 
