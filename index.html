@@ -32,8 +32,9 @@
       margin-bottom: 15px;
     }
     .logo img {
-      width: 100px;
+      width: 100px;   /* más grande y centrada */
       height: auto;
+      border-radius: 0; 
       object-fit: contain;
       display: block;
       margin: 0 auto;
@@ -44,45 +45,21 @@
       display: block;
       margin-top: 5px;
     }
-    .fila-busqueda {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-top: 15px;
-    }
-    .izquierda {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    #infoAlumno {
-      font-weight: bold;
-      color: #333;
-    }
     .btn { cursor: pointer; }
     .btn[disabled] { opacity: 0.5; cursor: not-allowed; }
   </style>
 </head>
 <body>
   <div class="contenido">
-    <!-- Insignia y título centrados -->
+    <!-- Insignia arriba centrada -->
     <div class="logo">
       <img src="insignia.png" alt="Insignia Colegio">
       <h2>Consulta de Notas por DNI</h2>
       <span id="estado" class="estado">Cargando datos…</span>
     </div>
 
-    <!-- Fila buscador + grado/sección -->
-    <div class="fila-busqueda">
-      <div class="izquierda">
-        <input type="text" id="dni" placeholder="Ingrese DNI" autocomplete="off">
-        <button id="btnBuscar" class="btn" onclick="buscar()" disabled>Buscar</button>
-      </div>
-      <div class="derecha">
-        <span id="infoAlumno"></span>
-      </div>
-    </div>
-
+    <input type="text" id="dni" placeholder="Ingrese DNI" autocomplete="off">
+    <button id="btnBuscar" class="btn" onclick="buscar()" disabled>Buscar</button>
     <div id="resultado"></div>
   </div>
 
@@ -106,7 +83,6 @@
     const btnBuscar = document.getElementById('btnBuscar');
     const btnLike = document.getElementById('btnLike');
     const inputDni = document.getElementById('dni');
-    const infoAlumno = document.getElementById('infoAlumno');
 
     // Enter para buscar
     inputDni.addEventListener('keydown', (e) => {
@@ -146,7 +122,6 @@
         r.innerHTML = "⚠️ Ingrese un DNI.";
         consultaActiva = false;
         btnLike.disabled = true;
-        infoAlumno.textContent = "";
         return;
       }
 
@@ -156,13 +131,8 @@
         r.innerHTML = "❌ DNI no encontrado";
         consultaActiva = false;
         btnLike.disabled = true;
-        infoAlumno.textContent = "";
         return;
       }
-
-      // Mostrar grado y sección a la derecha
-      infoAlumno.textContent =
-        Grado: ${alumno["GRADO"] || ""}  |  Sección: ${alumno["SECCIÓN"] || alumno["SECCION"] || ""};
 
       let html = <h3>${alumno["ESTUDIANTE"] ?? ""}</h3>;
       html += `<table>
@@ -172,7 +142,7 @@
           <th>C2</th>
           <th>C3</th>
           <th>C4</th>
-          <th>Nota Final</th>
+          <th>Promedio</th>
         </tr>`;
 
       const areas = {};
@@ -230,5 +200,3 @@
   </script>
 </body>
 </html>
-
-
