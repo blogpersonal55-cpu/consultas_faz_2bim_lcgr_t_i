@@ -27,27 +27,52 @@
     th { background: #4CAF50; color: white; }
     tr:nth-child(even) { background: #f2f2f2; }
     .totales { background:#e0e0e0; font-weight:bold; }
-    .logo { text-align: center; margin-bottom: 15px; }
-    .logo img { width: 100px; display: block; margin: 0 auto; }
-    .estado { font-size: 0.9rem; color: #555; display: block; margin-top: 5px; }
-    .fila-busqueda { display: flex; justify-content: space-between; align-items: center; margin-top: 15px; }
-    .izquierda { display: flex; align-items: center; gap: 10px; }
-    #infoAlumno { font-weight: bold; color: #333; }
+    .logo {
+      text-align: center;
+      margin-bottom: 15px;
+    }
+    .logo img {
+      width: 100px;
+      height: auto;
+      object-fit: contain;
+      display: block;
+      margin: 0 auto;
+    }
+    .estado {
+      font-size: 0.9rem;
+      color: #555;
+      display: block;
+      margin-top: 5px;
+    }
+    .fila-busqueda {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 15px;
+    }
+    .izquierda {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    #infoAlumno {
+      font-weight: bold;
+      color: #333;
+    }
     .btn { cursor: pointer; }
     .btn[disabled] { opacity: 0.5; cursor: not-allowed; }
   </style>
 </head>
 <body>
   <div class="contenido">
+    <!-- Insignia y título centrados -->
     <div class="logo">
-      <h3 style="text-align:left; color:#2c3e50; font-weight:bold;">
-        Buenas Prácticas de Gestión: "Con mi uso de mi DNI, activo mi rol de ciudadana"
-      </h3>
       <img src="insignia.png" alt="Insignia Colegio">
       <h2>Consulta de Notas por DNI</h2>
       <span id="estado" class="estado">Cargando datos…</span>
     </div>
 
+    <!-- Fila buscador + grado/sección -->
     <div class="fila-busqueda">
       <div class="izquierda">
         <input type="text" id="dni" placeholder="Ingrese DNI" autocomplete="off">
@@ -61,6 +86,7 @@
     <div id="resultado"></div>
   </div>
 
+  <!-- Encuesta Like -->
   <div class="sidebar">
     <h3>¿Te gusta este sistema?</h3>
     <button id="btnLike" class="btn" onclick="darLike()" disabled>👍 Me gusta</button>
@@ -71,6 +97,7 @@
     let datos = [];
     let csvCargado = false;
 
+    // Likes
     let likes = 0;
     let likeDado = false;
     let consultaActiva = false;
@@ -81,12 +108,16 @@
     const inputDni = document.getElementById('dni');
     const infoAlumno = document.getElementById('infoAlumno');
 
-    // Habilitar botón cuando escriben en el input
-    inputDni.addEventListener('input', () => {
-      btnBuscar.disabled = !(csvCargado && inputDni.value.trim().length > 0);
+    // Activar botón Buscar solo si hay texto y el CSV cargó
+    inputDni.addEventListener("input", () => {
+      if (csvCargado && inputDni.value.trim() !== "") {
+        btnBuscar.disabled = false;
+      } else {
+        btnBuscar.disabled = true;
+      }
     });
 
-    // Enter para buscar
+    // Permitir Enter para buscar
     inputDni.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' && !btnBuscar.disabled) buscar();
     });
@@ -99,47 +130,4 @@
         const lineas = t.trim().split(/\r?\n/).filter(l => l.trim().length > 0);
         const sep = (lineas[0].includes(";")) ? ";" : ",";
         const headers = lineas[0].split(sep).map(h => h.trim());
-        for (let i = 1; i < lineas.length; i++) {
-          const valores = lineas[i].split(sep).map(v => (v ?? "").trim());
-          const obj = {};
-          headers.forEach((h, idx) => obj[h] = (valores[idx] ?? ""));
-          datos.push(obj);
-        }
-        csvCargado = true;
-        estado.textContent = "✅ Datos cargados";
-        btnBuscar.disabled = !(inputDni.value.trim().length > 0);
-      })
-      .catch(err => {
-        console.error(err);
-        estado.textContent = "⚠️ Error cargando datos";
-      });
-
-    function buscar(){
-      if (!csvCargado) return;
-
-      const dni = inputDni.value.trim();
-      const r = document.getElementById("resultado");
-
-      if (!dni) {
-        r.innerHTML = "⚠️ Ingrese un DNI.";
-        consultaActiva = false;
-        btnLike.disabled = true;
-        infoAlumno.textContent = "";
-        return;
-      }
-
-      const alumno = datos.find(d => (d["DNI"] ?? "").trim() === dni);
-
-      if(!alumno){
-        r.innerHTML = "❌ DNI no encontrado";
-        consultaActiva = false;
-        btnLike.disabled = true;
-        infoAlumno.textContent = "";
-        return;
-      }
-
-      infoAlumno.textContent =
-        `Grado: ${alumno["GRADO"] || ""}  |  Sección: ${alumno["SECCIÓN"] || alumno["SECCION"] || ""}`;
-
-      let html = `<h3>${alumno["ESTUDIANTE"] ?? ""}</h3>`;
-      html
+        for (let i = 1; i
