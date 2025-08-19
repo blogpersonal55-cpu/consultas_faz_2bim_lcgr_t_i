@@ -8,10 +8,28 @@
       font-family: Arial, sans-serif; 
       padding: 20px; 
       background: #f9f9f9; 
+      display: flex; 
+      justify-content: space-between;
     }
+    .contenido { flex: 3; }
+    .sidebar {
+      flex: 1;
+      margin-left: 20px;
+      background: #fff;
+      padding: 15px;
+      border: 1px solid #ccc;
+      border-radius: 10px;
+      text-align: center;
+    }
+    input, button { padding: 10px; margin: 5px; }
+    table { border-collapse: collapse; width: 100%; margin-top: 20px; background: white; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+    th { background: #4CAF50; color: white; }
+    tr:nth-child(even) { background: #f2f2f2; }
+    .totales { background:#e0e0e0; font-weight:bold; }
     .logo {
       text-align: center;
-      margin-bottom: 10px;
+      margin-bottom: 15px;
     }
     .logo img {
       width: 100px;
@@ -20,56 +38,195 @@
       display: block;
       margin: 0 auto;
     }
-    .titulo-superior {
-      font-size: 1.2rem;
-      font-weight: bold;
-      color: #2a4d8f;
-      margin-bottom: 10px;
-      text-align: left;
+    .estado {
+      font-size: 0.9rem;
+      color: #555;
+      display: block;
+      margin-top: 5px;
     }
     .fila-busqueda {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-top: 10px;
-      margin-bottom: 20px;
+      margin-top: 15px;
     }
-    .buscador {
-      flex: 1;
+    .izquierda {
       display: flex;
+      align-items: center;
       gap: 10px;
     }
-    .infoAlumno {
-      flex: 1;
-      text-align: right;
+    #infoAlumno {
       font-weight: bold;
-    }
-    input, button { padding: 10px; }
-    table { 
-      border-collapse: collapse; 
-      width: 100%; 
-      margin-top: 10px; 
-      background: white; 
-      table-layout: fixed;
-      font-size: 0.9rem;
-    }
-    th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
-    th { background: #4CAF50; color: white; }
-    tr:nth-child(even) { background: #f2f2f2; }
-    .totales { background:#e0e0e0; font-weight:bold; }
-    #resultado {
-      max-height: 70vh; 
-      overflow-y: auto; 
-    }
-    .sidebar {
-      margin-top: 20px;
-      background: #fff;
-      padding: 15px;
-      border: 1px solid #ccc;
-      border-radius: 10px;
-      text-align: center;
+      color: #333;
     }
     .btn { cursor: pointer; }
-    .btn[dis]()
+    .btn[disabled] { opacity: 0.5; cursor: not-allowed; }
+  </style>
+</head>
+<body>
+  <div class="contenido">
+    <!-- Insignia y título centrados -->
+    <div class="logo">
+      <img src="insignia.png" alt="Insignia Colegio">
+      <h2>Consulta de Notas por DNI</h2>
+      <span id="estado" class="estado">Cargando datos…</span>
+    </div>
 
+    <!-- Fila buscador + grado/sección -->
+    <div class="fila-busqueda">
+      <div class="izquierda">
+        <input type="text" id="dni" placeholder="Ingrese DNI" autocomplete="off">
+        <button id="btnBuscar" class="btn" onclick="buscar()" disabled>Buscar</button>
+      </div>
+      <div class="derecha">
+        <span id="infoAlumno"></span>
+      </div>
+    </div>
 
+    <div id="resultado"></div>
+  </div>
+
+  <!-- Encuesta Like -->
+  <div class="sidebar">
+    <h3>¿Te gusta este sistema?</h3>
+    <button id="btnLike" class="btn" onclick="darLike()" disabled>👍 Me gusta</button>
+    <p>Likes: <span id="contador">0</span></p>
+  </div>
+
+  <script>
+    let datos = [];
+    let csvCargado = false;
+
+    // Likes
+    let likes = 0;
+    let likeDado = false;
+    let consultaActiva = false;
+
+    const estado = document.getElementById('estado');
+    const btnBuscar = document.getElementById('btnBuscar');
+    const btnLike = document.getElementById('btnLike');
+    const inputDni = document.getElementById('dni');
+    const infoAlumno = document.getElementById('infoAlumno');
+
+    // Enter para buscar
+    inputDni.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') buscar();
+    });
+
+    // Cargar CSV
+    fetch("notas.csv")
+      .then(r => r.text())
+      .then(t => {
+        t = t.replace(/^\uFEFF/, "");
+        const lineas = t.trim().split(/\r?\n/).filter(l => l.trim().length > 0);
+        const sep = (lineas[0].includes(";")) ? ";" : ",";
+        const headers = lineas[0].split(sep).map(h => h.trim());
+        for (let i = 1; i < lineas.length; i++) {
+          const valores = lineas[i].split(sep).map(v => (v ?? "").trim());
+          const obj = {};
+          headers.forEach((h, idx) => obj[h] = (valores[idx] ?? ""));
+          datos.push(obj);
+        }
+        csvCargado = true;
+        estado.textContent = "Datos cargados";
+        btnBuscar.disabled = false;
+      })
+      .catch(err => {
+        console.error(err);
+        estado.textContent = "⚠️ Error cargando datos";
+      });
+
+    function buscar(){
+      if (!csvCargado) return;
+
+      const dni = inputDni.value.trim();
+      const r = document.getElementById("resultado");
+
+      if (!dni) {
+        r.innerHTML = "⚠️ Ingrese un DNI.";
+        consultaActiva = false;
+        btnLike.disabled = true;
+        infoAlumno.textContent = "";
+        return;
+      }
+
+      const alumno = datos.find(d => (d["DNI"] ?? "").trim() === dni);
+
+      if(!alumno){
+        r.innerHTML = "❌ DNI no encontrado";
+        consultaActiva = false;
+        btnLike.disabled = true;
+        infoAlumno.textContent = "";
+        return;
+      }
+
+      // Mostrar grado y sección a la derecha
+      infoAlumno.textContent =
+        Grado: ${alumno["GRADO"] || ""}  |  Sección: ${alumno["SECCIÓN"] || alumno["SECCION"] || ""};
+
+      let html = <h3>${alumno["ESTUDIANTE"] ?? ""}</h3>;
+      html += `<table>
+        <tr>
+          <th>Área Curricular</th>
+          <th>C1</th>
+          <th>C2</th>
+          <th>C3</th>
+          <th>C4</th>
+          <th>Nota Final</th>
+        </tr>`;
+
+      const areas = {};
+      Object.keys(alumno).forEach(col => {
+        if (/\sC[1-4]$/i.test(col)) {
+          const partes = col.split(" ");
+          const comp = partes.pop();
+          const area = partes.join(" ");
+          if(!areas[area]) areas[area] = {};
+          areas[area][comp] = alumno[col];
+        }
+      });
+
+      Object.keys(areas).forEach(area => {
+        const notas = ["C1","C2","C3","C4"].map(c => parseFloat(areas[area][c]) || 0);
+        const validas = notas.filter(n => n > 0);
+        const promedio = validas.length ? (validas.reduce((a,b)=>a+b,0)/validas.length).toFixed(2) : "";
+        html += `<tr>
+          <td>${area}</td>
+          <td>${areas[area]["C1"] || ""}</td>
+          <td>${areas[area]["C2"] || ""}</td>
+          <td>${areas[area]["C3"] || ""}</td>
+          <td>${areas[area]["C4"] || ""}</td>
+          <td>${promedio}</td>
+        </tr>`;
+      });
+
+      ["Total de Calificaciones","Total AD","Total A","Total B","Total C"].forEach(col => {
+        if (alumno[col]) {
+          html += <tr class="totales"><td colspan="5">${col}</td><td>${alumno[col]}</td></tr>;
+        }
+      });
+
+      html += "</table>";
+      r.innerHTML = html;
+
+      likeDado = false;
+      consultaActiva = true;
+      btnLike.disabled = false;
+    }
+
+    function darLike(){
+      if (!consultaActiva) {
+        alert("Primero realiza una consulta válida.");
+        return;
+      }
+      if (!likeDado) {
+        likes++;
+        likeDado = true;
+        document.getElementById("contador").textContent = likes;
+      } else {
+        alert("Ya diste tu like en esta consulta 🙂");
+      }
+    }
+  </script>
+</body>
+</html>
