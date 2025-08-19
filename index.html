@@ -39,7 +39,6 @@
     .logo img {
       width: 80px;
       height: auto;
-      border-radius: 0;
       object-fit: contain;
       display: block;
     }
@@ -91,7 +90,7 @@
 </head>
 <body>
   <div class="contenido">
-    <!-- Encabezado con insignia a la izquierda y título centrado -->
+    <!-- Encabezado -->
     <div class="encabezado">
       <div class="logo">
         <img src="insignia.png" alt="Insignia Colegio">
@@ -109,7 +108,7 @@
     <div id="resultado"></div>
   </div>
 
-  <!-- Encuesta Like -->
+  <!-- Sidebar -->
   <div class="sidebar">
     <h3>¿Te gusta este sistema?</h3>
     <button id="btnLike" class="btn" onclick="darLike()" disabled>👍 Me gusta</button>
@@ -129,7 +128,15 @@
     const btnLike = document.getElementById('btnLike');
     const inputDni = document.getElementById('dni');
 
-    // Enter activa búsqueda
+    // Activar botón al tipear
+    inputDni.addEventListener("input", () => {
+      if (inputDni.value.trim() !== "") {
+        btnBuscar.disabled = false;
+      } else {
+        btnBuscar.disabled = true;
+      }
+    });
+
     inputDni.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') buscar();
     });
@@ -138,7 +145,7 @@
     fetch("notas.csv")
       .then(r => r.text())
       .then(t => {
-        t = t.replace(/^\uFEFF/, ""); // quitar BOM
+        t = t.replace(/^\uFEFF/, "");
         const lineas = t.trim().split(/\r?\n/).filter(l => l.trim().length > 0);
         const sep = (lineas[0].includes(";")) ? ";" : ",";
         const headers = lineas[0].split(sep).map(h => h.trim());
@@ -149,27 +156,18 @@
           datos.push(obj);
         }
         csvCargado = true;
-        estado.textContent = "✅ Listo para consultar";
-        if (inputDni.value.trim() !== "") {
-          btnBuscar.disabled = false;
-        }
+        estado.textContent = "✅ Listo para consultas";
       })
       .catch(err => {
         console.error(err);
         estado.textContent = "⚠️ Error cargando datos";
       });
 
-    // Habilitar/deshabilitar botón según input
-    inputDni.addEventListener("input", () => {
-      if (csvCargado && inputDni.value.trim() !== "") {
-        btnBuscar.disabled = false;
-      } else {
-        btnBuscar.disabled = true;
-      }
-    });
-
     function buscar(){
-      if (!csvCargado) return;
+      if (!csvCargado) {
+        alert("⚠️ Los datos aún no están cargados, espera un momento.");
+        return;
+      }
 
       const dni = inputDni.value.trim();
       const r = document.getElementById("resultado");
@@ -207,3 +205,28 @@
           const partes = col.split(" ");
           const comp = partes.pop();
           const area = partes.join(" ");
+          if(!areas[area]) areas[area] = {};
+          areas[area][comp] = alumno[col];
+        }
+      });
+
+      Object.keys(areas).forEach(area => {
+        const notas = ["C1","C2","C3","C4"].map(c => parseFloat(areas[area][c]) || 0);
+        const validas = notas.filter(n => n > 0);
+        const promedio = validas.length ? (validas.reduce((a,b)=>a+b,0)/validas.length).toFixed(2) : "";
+        html += `<tr>
+          <td>${area}</td>
+          <td>${areas[area]["C1"] || ""}</td>
+          <td>${areas[area]["C2"] || ""}</td>
+          <td>${areas[area]["C3"] || ""}</td>
+          <td>${areas[area]["C4"] || ""}</td>
+          <td>${promedio}</td>
+        </tr>`;
+      });
+
+      // Mostrar totales especiales si existen en CSV
+      ["Total AD","Total A","Total B","Total C"].forEach(col => {
+        if (alumno[col]) {
+          html += `<tr class="totales"><td colspan="5">${col}</td><td>${
+
+
