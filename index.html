@@ -11,7 +11,12 @@
       display: flex; 
       justify-content: space-between;
     }
-    .contenido { flex: 3; }
+    .contenido { 
+      flex: 3; 
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
     .sidebar {
       flex: 1;
       margin-left: 20px;
@@ -20,23 +25,59 @@
       border: 1px solid #ccc;
       border-radius: 10px;
       text-align: center;
+      height: fit-content;
     }
-    input, button { padding: 10px; margin: 5px; }
-    table { border-collapse: collapse; width: 100%; margin-top: 20px; background: white; }
-    th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
-    th { background: #4CAF50; color: white; }
-    tr:nth-child(even) { background: #f2f2f2; }
-    .totales { background:#e0e0e0; font-weight:bold; }
+    .encabezado {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 20px;
+    }
     .logo {
-      text-align: center;
-      margin-bottom: 15px;
+      flex: 0 0 auto;
     }
     .logo img {
-      width: 100px;
+      width: 80px;
       height: auto;
+      border-radius: 0;
       object-fit: contain;
       display: block;
-      margin: 0 auto;
+    }
+    .titulo {
+      flex: 1;
+      text-align: center;
+    }
+    .titulo h2 {
+      margin: 0;
+    }
+    .buscador {
+      margin-top: 10px;
+    }
+    input, button { 
+      padding: 10px; 
+      margin: 5px; 
+    }
+    table { 
+      border-collapse: collapse; 
+      width: 100%; 
+      margin-top: 20px; 
+      background: white; 
+    }
+    th, td { 
+      border: 1px solid #ccc; 
+      padding: 8px; 
+      text-align: center; 
+    }
+    th { 
+      background: #4CAF50; 
+      color: white; 
+    }
+    tr:nth-child(even) { 
+      background: #f2f2f2; 
+    }
+    .totales { 
+      background:#e0e0e0; 
+      font-weight:bold; 
     }
     .estado {
       font-size: 0.9rem;
@@ -44,42 +85,24 @@
       display: block;
       margin-top: 5px;
     }
-    .fila-busqueda {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-top: 15px;
-    }
-    .izquierda {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    #infoAlumno {
-      font-weight: bold;
-      color: #333;
-    }
     .btn { cursor: pointer; }
     .btn[disabled] { opacity: 0.5; cursor: not-allowed; }
   </style>
 </head>
 <body>
   <div class="contenido">
-    <!-- Insignia y título centrados -->
-    <div class="logo">
-      <img src="insignia.png" alt="Insignia Colegio">
-      <h2>Consulta de Notas por DNI</h2>
-      <span id="estado" class="estado">Cargando datos…</span>
-    </div>
-
-    <!-- Fila buscador + grado/sección -->
-    <div class="fila-busqueda">
-      <div class="izquierda">
-        <input type="text" id="dni" placeholder="Ingrese DNI" autocomplete="off">
-        <button id="btnBuscar" class="btn" onclick="buscar()" disabled>Buscar</button>
+    <!-- Encabezado con insignia a la izquierda y título centrado -->
+    <div class="encabezado">
+      <div class="logo">
+        <img src="insignia.png" alt="Insignia Colegio">
       </div>
-      <div class="derecha">
-        <span id="infoAlumno"></span>
+      <div class="titulo">
+        <h2>Consulta de Notas por DNI</h2>
+        <div class="buscador">
+          <input type="text" id="dni" placeholder="Ingrese DNI" autocomplete="off">
+          <button id="btnBuscar" class="btn" onclick="buscar()" disabled>Buscar</button>
+        </div>
+        <span id="estado" class="estado">Cargando datos…</span>
       </div>
     </div>
 
@@ -97,7 +120,6 @@
     let datos = [];
     let csvCargado = false;
 
-    // Likes
     let likes = 0;
     let likeDado = false;
     let consultaActiva = false;
@@ -106,20 +128,9 @@
     const btnBuscar = document.getElementById('btnBuscar');
     const btnLike = document.getElementById('btnLike');
     const inputDni = document.getElementById('dni');
-    const infoAlumno = document.getElementById('infoAlumno');
 
-    // Activar botón Buscar solo si hay texto y el CSV cargó
-    inputDni.addEventListener("input", () => {
-      if (csvCargado && inputDni.value.trim() !== "") {
-        btnBuscar.disabled = false;
-      } else {
-        btnBuscar.disabled = true;
-      }
-    });
-
-    // Permitir Enter para buscar
     inputDni.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' && !btnBuscar.disabled) buscar();
+      if (e.key === 'Enter') buscar();
     });
 
     // Cargar CSV
@@ -130,4 +141,120 @@
         const lineas = t.trim().split(/\r?\n/).filter(l => l.trim().length > 0);
         const sep = (lineas[0].includes(";")) ? ";" : ",";
         const headers = lineas[0].split(sep).map(h => h.trim());
-        for (let i = 1; i
+        for (let i = 1; i < lineas.length; i++) {
+          const valores = lineas[i].split(sep).map(v => (v ?? "").trim());
+          const obj = {};
+          headers.forEach((h, idx) => obj[h] = (valores[idx] ?? ""));
+          datos.push(obj);
+        }
+        csvCargado = true;
+        estado.textContent = "Datos cargados";
+        btnBuscar.disabled = false;
+      })
+      .catch(err => {
+        console.error(err);
+        estado.textContent = "⚠️ Error cargando datos";
+      });
+
+    function buscar(){
+      if (!csvCargado) return;
+
+      const dni = inputDni.value.trim();
+      const r = document.getElementById("resultado");
+
+      if (!dni) {
+        r.innerHTML = "⚠️ Ingrese un DNI.";
+        consultaActiva = false;
+        btnLike.disabled = true;
+        return;
+      }
+
+      const alumno = datos.find(d => (d["DNI"] ?? "").trim() === dni);
+
+      if(!alumno){
+        r.innerHTML = "❌ DNI no encontrado";
+        consultaActiva = false;
+        btnLike.disabled = true;
+        return;
+      }
+
+      let html = `<h3>${alumno["ESTUDIANTE"] ?? ""}</h3>`;
+      html += `<table>
+        <tr>
+          <th>Área Curricular</th>
+          <th>C1</th>
+          <th>C2</th>
+          <th>C3</th>
+          <th>C4</th>
+          <th>Promedio</th>
+        </tr>`;
+
+      const areas = {};
+      Object.keys(alumno).forEach(col => {
+        if (/\sC[1-4]$/i.test(col)) {
+          const partes = col.split(" ");
+          const comp = partes.pop();
+          const area = partes.join(" ");
+          if(!areas[area]) areas[area] = {};
+          areas[area][comp] = alumno[col];
+        }
+      });
+
+      Object.keys(areas).forEach(area => {
+        const notas = ["C1","C2","C3","C4"].map(c => parseFloat(areas[area][c]) || 0);
+        const validas = notas.filter(n => n > 0);
+        const promedio = validas.length ? (validas.reduce((a,b)=>a+b,0)/validas.length).toFixed(2) : "";
+        html += `<tr>
+          <td>${area}</td>
+          <td>${areas[area]["C1"] || ""}</td>
+          <td>${areas[area]["C2"] || ""}</td>
+          <td>${areas[area]["C3"] || ""}</td>
+          <td>${areas[area]["C4"] || ""}</td>
+          <td>${promedio}</td>
+        </tr>`;
+      });
+
+      // Calcular Total de Calificaciones siempre
+      let totalNotas = 0;
+      Object.values(areas).forEach(area => {
+        ["C1","C2","C3","C4"].forEach(c => {
+          if (area[c] && !isNaN(parseFloat(area[c]))) {
+            totalNotas++;
+          }
+        });
+      });
+      html += `<tr class="totales"><td colspan="5">Total de Calificaciones</td><td>${totalNotas}</td></tr>`;
+
+      // Mostrar otros totales si existen en CSV
+      ["Total AD","Total A","Total B","Total C"].forEach(col => {
+        if (alumno[col]) {
+          html += `<tr class="totales"><td colspan="5">${col}</td><td>${alumno[col]}</td></tr>`;
+        }
+      });
+
+      html += "</table>";
+      r.innerHTML = html;
+
+      likeDado = false;
+      consultaActiva = true;
+      btnLike.disabled = false;
+    }
+
+    function darLike(){
+      if (!consultaActiva) {
+        alert("Primero realiza una consulta válida.");
+        return;
+      }
+      if (!likeDado) {
+        likes++;
+        likeDado = true;
+        document.getElementById("contador").textContent = likes;
+      } else {
+        alert("Ya diste tu like en esta consulta 🙂");
+      }
+    }
+  </script>
+</body>
+</html>
+
+    
